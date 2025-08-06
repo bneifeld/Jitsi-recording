@@ -42,6 +42,9 @@ echo "📂 Initializing Node.js project..."
 npm init -y
 npm install puppeteer aws-sdk express node-fetch
 
+echo "🌐 Forcing Puppeteer to fetch Chromium..."
+node -e "require('puppeteer').createBrowserFetcher().download(require('puppeteer')._preferredRevision)" || true
+
 echo "🎛 Setting up ALSA Loopback..."
 sudo modprobe snd-aloop
 if ! grep -q "snd-aloop" /etc/modules; then
@@ -76,3 +79,4 @@ sudo systemctl enable jitsi-recording
 sudo systemctl start jitsi-recording
 
 echo "🎉 Setup complete! Place your jitsi-recording-server.js file in /root/ and your .env in /root/.env"
+
