@@ -1,11 +1,13 @@
 #!/bin/bash
-
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-echo "🔧 Updating system and installing base dependencies..."
-sudo apt update && sudo apt upgrade -yq
+echo "📦 Pre-Upgrade: Prevent prompts from openssh-server or other packages..."
+sudo apt update
+sudo apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -yq
+
+echo "🔧 Installing base dependencies..."
 sudo apt install -yq curl wget gnupg ca-certificates unzip software-properties-common git build-essential
 
 echo "🟩 Installing Node.js 18 (LTS)..."
