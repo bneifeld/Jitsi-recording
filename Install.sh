@@ -2,28 +2,30 @@
 
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
 echo "🔧 Updating system and installing base dependencies..."
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl wget gnupg ca-certificates unzip software-properties-common git build-essential
+sudo apt update && sudo apt upgrade -yq
+sudo apt install -yq curl wget gnupg ca-certificates unzip software-properties-common git build-essential
 
 echo "🟩 Installing Node.js 18 (LTS)..."
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
+sudo apt install -yq nodejs
 
 echo "🎬 Installing FFmpeg..."
-sudo apt install -y ffmpeg
+sudo apt install -yq ffmpeg
 
 echo "🖥️ Installing Chromium browser..."
-sudo apt install -y chromium-browser
+sudo apt install -yq chromium-browser
 
 echo "📦 Installing essential libraries for Puppeteer/Chromium..."
-sudo apt install -y libxcomposite1 libxcursor1 libxdamage1 libxi6 \
+sudo apt install -yq libxcomposite1 libxcursor1 libxdamage1 libxi6 \
 libxtst6 libnss3 libxrandr2 libasound2 libpangocairo-1.0-0 \
 libatk1.0-0 libcups2 libdrm2 libgbm1 libxss1 libgtk-3-0 \
 xvfb
 
 echo "🧠 Installing ALSA and loopback driver..."
-sudo apt install -y alsa-utils linux-sound-base linux-image-extra-virtual
+sudo apt install -yq alsa-utils linux-sound-base linux-image-extra-virtual
 echo "🔁 Enabling snd-aloop..."
 sudo modprobe snd-aloop
 echo "snd-aloop" | sudo tee -a /etc/modules
