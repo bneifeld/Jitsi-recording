@@ -1,82 +1,72 @@
 #!/bin/bash
+
 set -e
 
-echo "🚀 Updating system..."
+echo "🔧 Updating system and installing base dependencies..."
 sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget gnupg ca-certificates unzip software-properties-common git build-essential
 
-echo "📦 Installing dependencies..."
-sudo apt install -y \
-  ffmpeg \
-  alsa-utils \
-  pulseaudio \
-  xvfb \
-  unzip \
-  wget \
-  curl \
-  gnupg \
-  build-essential \
-  libnss3 \
-  libatk1.0-0 \
-  libatk-bridge2.0-0 \
-  libcups2 \
-  libxcomposite1 \
-  libxrandr2 \
-  libxdamage1 \
-  libxkbcommon0 \
-  libasound2 \
-  libgbm-dev \
-  libxshmfence1 \
-  dbus-x11 \
-  nodejs \
-  npm
-
-echo "🎯 Setting up Node.js (LTS)..."
+echo "🟩 Installing Node.js 18 (LTS)..."
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 
-echo "🎥 Creating recording server directory..."
-mkdir -p /root/jitsi-recorder
-cd /root/jitsi-recorder
+echo "🎬 Installing FFmpeg..."
+sudo apt install -y ffmpeg
 
-echo "📂 Initializing Node.js project..."
-npm init -y
-npm install puppeteer aws-sdk express node-fetch
+echo "🖥️ Installing Chromium browser..."
+sudo apt install -y chromium-browser
 
-echo "🌐 Forcing Puppeteer to fetch Chromium..."
-node -e "require('puppeteer').createBrowserFetcher().download(require('puppeteer')._preferredRevision)" || true
+echo "📦 Installing essential libraries for Puppeteer/Chromium..."
+sudo apt install -y libxcomposite1 libxcursor1 libxdamage1 libxi6 \
+libxtst6 libnss3 libxrandr2 libasound2 libpangocairo-1.0-0 \
+libatk1.0-0 libcups2 libdrm2 libgbm1 libxss1 libgtk-3-0 \
+xvfb
 
-echo "🎛 Setting up ALSA Loopback..."
+echo "🧠 Installing ALSA and loopback driver..."
+sudo apt install -y alsa-utils linux-sound-base linux-image-extra-virtual
+echo "🔁 Enabling snd-aloop..."
 sudo modprobe snd-aloop
-if ! grep -q "snd-aloop" /etc/modules; then
-  echo "snd-aloop" | sudo tee -a /etc/modules
-fi
+echo "snd-aloop" | sudo tee -a /etc/modules
+echo "options snd-aloop index=0" | sudo tee -a /etc/modprobe.d/alsa-loopback.conf
 
-echo "🖥 Setting up Xvfb..."
-export DISPLAY=:99
-Xvfb :99 -screen 0 1920x1080x24 &
+echo "📁 Creating /root folder if not exists..."
+sudo mkdir -p /root
 
-echo "🔧 Creating systemd service..."
-sudo tee /etc/systemd/system/jitsi-recording.service > /dev/null <<EOL
+echo "📦 Installing NPM packages globally if needed..."
+sudo npm install -g npm
+
+echo "📁 Creating project folder and installing project dependencies..."
+cd /root
+sudo npm init -y
+sudo npm install express aws-sdk node-fetch puppeteer dotenv
+
+echo "🛠️ Creating systemd service..."
+cat <<EOF | sudo tee /etc/systemd/system/jitsi-recorder.service
 [Unit]
-Description=Jitsi Recording Server
+Description=Tutorade Jitsi Recording Server
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /root/jitsi-recording-server.js
-Restart=always
+Type=simple
 User=root
 Environment=DISPLAY=:99
 WorkingDirectory=/root
-EnvironmentFile=/root/.env
+ExecStart=/usr/bin/node /root/jitsi-recording-server.js
+Restart=always
+RestartSec=5
+StandardOutput=inherit
+StandardError=inherit
 
 [Install]
 WantedBy=multi-user.target
-EOL
+EOF
 
-echo "✅ Enabling and starting service..."
+echo "🔄 Reloading and enabling service..."
 sudo systemctl daemon-reexec
-sudo systemctl enable jitsi-recording
-sudo systemctl start jitsi-recording
+sudo systemctl daemon-reload
+sudo systemctl enable jitsi-recorder
 
-echo "🎉 Setup complete! Place your jitsi-recording-server.js file in /root/ and your .env in /root/.env"
-
+echo "✅ Done. You still need to:"
+echo "👉 1. Upload your server file to: /root/jitsi-recording-server.js"
+echo "👉 2. Set your .env variables inside /root/.env"
+echo "👉 3. Start the service with: sudo systemctl start jitsi-recorder"
